@@ -1,1 +1,6 @@
-print("ВСЕМ ХАЙ С ВАМИ ЮДЖИН")
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+
