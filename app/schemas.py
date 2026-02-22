@@ -1,19 +1,58 @@
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import Optional
-from datetime import datetime
+from enum import StrEnum
+from datetime import datetime, timezone
 from decimal import Decimal
 
-class Wallet(BaseModel):
-    id: int
-    amount: Decimal = Field(default=Decimal(0))
-    owner_id: int
-    name: Optional[str] = "Основной счёт"
 
-class Transaction(BaseModel):
+class WalletStatus(StrEnum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    BLOCKED = "blocked"
+
+
+class TransactionStatus(StrEnum):
+    IN_PROCESS = "in_process"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    BLOCKED = "blocked"
+
+
+class Currency(StrEnum):
+    RUB = "RUB"
+    USD = "USD"
+    EUR = "EUR"
+    CNY = "CNY"
+
+
+class WalletRequest(BaseModel):
+    owner_id: int
+    currency: Currency = Field(default=Currency.RUB)
+
+
+class WalletResponse(BaseModel):
     id: int
-    amount: Decimal = Field(gt=0, description="Величина транзакции должна быть больше 0")
-    date_time: datetime = Field(default=datetime.now())
+    owner_id: int
+    status: WalletStatus
+    currency: Currency
+    balance: Decimal = Field(ge=0)
+    created_at: datetime
+    name: str
+
+
+class TransactionRequest(BaseModel):
     sender_wallet_id: int
     receiver_wallet_id: int
-    comment: Optional[str] = None
+    amount: Decimal = Field(gt=0)
+    comment: str | None = None
+
+
+class TransactionResponse(BaseModel):
+    id: int
+    sender_wallet_id: int
+    receiver_wallet_id: int
+    status: TransactionStatus
+    currency: Currency
+    amount: Decimal = Field(gt=0)
+    date_time: datetime
+    comment: str | None = None
