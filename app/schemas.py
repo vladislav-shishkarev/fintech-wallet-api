@@ -28,6 +28,7 @@ class Currency(StrEnum):
 class WalletRequest(BaseModel):
     owner_id: int
     currency: Currency = Field(default=Currency.RUB)
+    name: str
 
 
 class WalletResponse(BaseModel):
