@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field, EmailStr
 from enum import StrEnum
 from datetime import datetime
 from decimal import Decimal
@@ -27,7 +26,7 @@ class Currency(StrEnum):
 
 class UserRequest(BaseModel):
     name: str
-    email: str = Field(pattern="/^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$/gim")
+    email: EmailStr
     phone: str = Field(pattern="^\d{11}$")
 
 

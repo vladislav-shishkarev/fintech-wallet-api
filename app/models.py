@@ -35,12 +35,12 @@ class Wallet(Base):
     owner: Mapped["User"] = relationship("User", back_populates="wallets")
     sent_transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
-        foreign_keys="[Transaction.sender_wallet_id]",
+        foreign_keys="Transaction.sender_wallet_id",
         back_populates="sender_wallet"
     )
     received_transactions: Mapped[List["Transaction"]] = relationship(
         "Transaction",
-        foreign_keys="[Transaction.receiver_wallet_id]",
+        foreign_keys="Transaction.receiver_wallet_id",
         back_populates="receiver_wallet"
     )
 
@@ -59,11 +59,11 @@ class Transaction(Base):
     comment: Mapped[str] = mapped_column(String(256), nullable=True)
     sender_wallet: Mapped["Wallet"] = relationship(
         "Wallet",
-        foreign_keys=[sender_wallet_id],
+        foreign_keys=sender_wallet_id,
         back_populates="sent_transactions"
     )
     receiver_wallet: Mapped["Wallet"] = relationship(
         "Wallet",
-        foreign_keys=[receiver_wallet_id],
+        foreign_keys=receiver_wallet_id,
         back_populates="received_transactions"
     )
