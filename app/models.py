@@ -5,7 +5,7 @@ from sqlalchemy import String, DateTime, ForeignKey, DECIMAL, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
-from app.schemas import WalletStatus, TransactionStatus, Currency
+from app.enums import WalletStatus, TransactionStatus, Currency
 
 
 class User(Base):
@@ -24,7 +24,7 @@ class Wallet(Base):
     __tablename__ = "wallets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))  # Ссылка на таблицу users
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     status: Mapped[WalletStatus] = mapped_column(SAEnum(WalletStatus, native_enum=False), nullable=False)
     currency: Mapped[Currency] = mapped_column(SAEnum(Currency, native_enum=False), nullable=False)
     balance: Mapped[Decimal] = mapped_column(DECIMAL(11, 2), nullable=False)
