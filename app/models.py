@@ -4,8 +4,8 @@ from typing import List
 from sqlalchemy import String, DateTime, ForeignKey, DECIMAL, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from main.app.db import Base
-from main.app.schemas import WalletStatus, TransactionStatus, Currency
+from app.db import Base
+from app.schemas import WalletStatus, TransactionStatus, Currency
 
 
 class User(Base):

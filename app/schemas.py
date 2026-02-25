@@ -1,27 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
-from enum import StrEnum
 from datetime import datetime
 from decimal import Decimal
-
-
-class WalletStatus(StrEnum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    BLOCKED = "blocked"
-
-
-class TransactionStatus(StrEnum):
-    IN_PROCESS = "in_process"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    BLOCKED = "blocked"
-
-
-class Currency(StrEnum):
-    RUB = "RUB"
-    USD = "USD"
-    EUR = "EUR"
-    CNY = "CNY"
+from app.enums import Currency, WalletStatus, TransactionStatus
 
 
 class UserRequest(BaseModel):
