@@ -19,3 +19,9 @@ async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wa
     await session.refresh(new_wallet)
     
     return new_wallet
+
+
+async def get_wallet(session: AsyncSession, wallet_id: int) -> Wallet | None:
+     new_wallet = await session.get(Wallet, wallet_id)
+
+     return new_wallet
