@@ -5,13 +5,15 @@ from sqlalchemy import String, DateTime, ForeignKey, DECIMAL, func, CheckConstra
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
-from app.enums import WalletStatus, TransactionStatus, Currency
+from app.enums import WalletStatus, TransactionStatus, Currency, UserStatus
 
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    status: Mapped[UserStatus] = mapped_column(SAEnum(UserStatus, native_enum=False,
+                                                values_callable=lambda obj: [x.value for x in obj]), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(256), unique=True, nullable=False)
     phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)

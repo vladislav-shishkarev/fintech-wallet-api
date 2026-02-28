@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 from decimal import Decimal
-from app.enums import Currency, WalletStatus, TransactionStatus
+from app.enums import Currency, WalletStatus, TransactionStatus, UserStatus
 
 
 class UserRequest(BaseModel):
@@ -12,6 +12,7 @@ class UserRequest(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    status: UserStatus
     name: str
     email: str
     phone: str
