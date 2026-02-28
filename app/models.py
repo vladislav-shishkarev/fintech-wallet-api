@@ -17,16 +17,18 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(),
                                                  nullable=False)
-    wallets: Mapped[List["Wallet"]] = relationship("Wallet", back_populates="owner", cascade="all, delete")
+    wallets: Mapped[List["Wallet"]] = relationship("Wallet", back_populates="owner")
 
 
 class Wallet(Base):
     __tablename__ = "wallets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    status: Mapped[WalletStatus] = mapped_column(SAEnum(WalletStatus, native_enum=False, values_callable=lambda obj: [x.value for x in obj]), nullable=False)
-    currency: Mapped[Currency] = mapped_column(SAEnum(Currency, native_enum=False, values_callable=lambda obj: [x.value for x in obj]), nullable=False)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[WalletStatus] = mapped_column(SAEnum(WalletStatus, native_enum=False,
+                                                        values_callable=lambda obj: [x.value for x in obj]), nullable=False)
+    currency: Mapped[Currency] = mapped_column(SAEnum(Currency, native_enum=False,
+                                                      values_callable=lambda obj: [x.value for x in obj]), nullable=False)
     balance: Mapped[Decimal] = mapped_column(DECIMAL(11, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(),
                                                  nullable=False)
@@ -57,8 +59,10 @@ class Transaction(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     sender_wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
     receiver_wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
-    status: Mapped[TransactionStatus] = mapped_column(SAEnum(TransactionStatus, native_enum=False, values_callable=lambda obj: [x.value for x in obj]), nullable=False)
-    currency: Mapped[Currency] = mapped_column(SAEnum(Currency, native_enum=False, values_callable=lambda obj: [x.value for x in obj]), nullable=False)
+    status: Mapped[TransactionStatus] = mapped_column(SAEnum(TransactionStatus, native_enum=False,
+                                                        values_callable=lambda obj: [x.value for x in obj]), nullable=False)
+    currency: Mapped[Currency] = mapped_column(SAEnum(Currency, native_enum=False,
+                                                      values_callable=lambda obj: [x.value for x in obj]), nullable=False)
     amount: Mapped[Decimal] = mapped_column(DECIMAL(11, 2), nullable=False)
     date_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.current_timestamp(),
                                                 nullable=False)
