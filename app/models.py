@@ -21,6 +21,10 @@ class User(Base):
                                                  nullable=False)
     wallets: Mapped[List["Wallet"]] = relationship("Wallet", back_populates="owner")
 
+    __table_args__ = (
+        CheckConstraint("status in ('active', 'inactive', 'blocked')", name="ck_users_status"),
+    )
+
 
 class Wallet(Base):
     __tablename__ = "wallets"
