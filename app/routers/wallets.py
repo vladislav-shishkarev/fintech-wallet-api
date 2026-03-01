@@ -12,6 +12,9 @@ router = APIRouter(prefix="/wallets", tags=["wallets"])
 
 @router.post("", tags=["wallets"], response_model=WalletResponse)
 async def create_new_wallet(wallet: WalletRequest, session: Annotated[AsyncSession, Depends(get_db)]):
+    """
+    Create a new wallet
+    """
     try:
         result = await create_wallet(session, wallet)
     except UserNotFoundError as e:
@@ -21,6 +24,9 @@ async def create_new_wallet(wallet: WalletRequest, session: Annotated[AsyncSessi
 
 @router.get("/{id}", tags=["wallets"], response_model=WalletResponse)
 async def get_wallet_id(id: int, session: Annotated[AsyncSession, Depends(get_db)]):
+    """
+    Return wallet by id
+    """
     try:
         result = await get_wallet(session, id)
     except WalletNotFoundError as e:
