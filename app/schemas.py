@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 from decimal import Decimal
 from app.enums import Currency, WalletStatus, TransactionStatus, UserStatus
@@ -17,6 +17,7 @@ class UserResponse(BaseModel):
     email: str
     phone: str
     created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletRequest(BaseModel):
@@ -33,6 +34,7 @@ class WalletResponse(BaseModel):
     balance: Decimal = Field(ge=0)
     created_at: datetime
     name: str
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TransactionRequest(BaseModel):
@@ -51,3 +53,4 @@ class TransactionResponse(BaseModel):
     amount: Decimal = Field(gt=0)
     date_time: datetime
     comment: str | None = None
+    model_config = ConfigDict(from_attributes=True)
