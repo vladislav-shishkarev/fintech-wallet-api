@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import WalletRequest
 from app.models import Wallet
 from app.enums import WalletStatus
-from app.errors import UserNotFoundError
+from app.errors import UserNotFoundError, WalletNotFoundError
 from decimal import Decimal
 
 
@@ -26,7 +26,8 @@ async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wa
     return new_wallet
 
 
-async def get_wallet(session: AsyncSession, wallet_id: int) -> Wallet | None:
-     wallet = await session.get(Wallet, wallet_id)
-
-     return wallet
+async def get_wallet(session: AsyncSession, wallet_id: int) -> Wallet:
+    wallet = await session.get(Wallet, wallet_id)
+    if wallet.id is None:
+        raise WalletNotFoundError(wallet_id)
+    return wallet
