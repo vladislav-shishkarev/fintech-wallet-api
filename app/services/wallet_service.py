@@ -28,6 +28,6 @@ async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wa
 
 async def get_wallet(session: AsyncSession, wallet_id: int) -> Wallet:
     wallet = await session.get(Wallet, wallet_id)
-    if wallet.id is None:
+    if wallet is None:
         raise WalletNotFoundError(wallet_id)
     return wallet
