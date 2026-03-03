@@ -19,9 +19,10 @@ async def create_user(session: AsyncSession, user_data: UserRequest) -> User:
         await session.refresh(new_user)
     except IntegrityError as e:
         await session.rollback()
-        if "email" in str(e):
+        error_msg = str(e.orig)
+        if "users_email_key" in error_msg:
             raise EmailAlreadyExistsError(user_data.email)
-        elif "phone" in str(e):
+        elif "users_phone_key" in error_msg:
             raise PhoneAlreadyExistsError(user_data.phone)
         raise e
 
