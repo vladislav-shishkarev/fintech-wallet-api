@@ -1,0 +1,60 @@
+# Сборка и зависимости (уже есть у тебя)
+.venv
+venv
+ENV
+env
+.env
+.env.*
+!.env.example  # Пример конфига можно оставить для доки
+
+# Кэш Python и байт-код
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+
+# Локальные настройки IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Система (особенно если работаешь на Mac или Windows)
+.DS_Store
+Thumbs.db
+
+# Git (уже есть у тебя)
+.git
+.gitignore
+.github/
+.gitlab-ci.yml
+
+# Тесты и отчеты (актуально, так как переходим к Pytest)
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+htmlcov/
+.hypothesis/
+
+# Сборка пакетов (если вдруг решишь делать whl)
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+
+# Твой кастомный пункт
+sql/
