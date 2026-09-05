@@ -1,10 +1,12 @@
+from decimal import Decimal
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas import WalletRequest
-from app.models import Wallet
+
 from app.enums import WalletStatus
 from app.errors import UserNotFoundError, WalletNotFoundError
-from decimal import Decimal
+from app.models import Wallet
+from app.schemas import WalletRequest
 
 
 async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wallet:
@@ -13,7 +15,7 @@ async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wa
         currency=wallet_data.currency,
         name=wallet_data.name,
         balance=Decimal(0),
-        status=WalletStatus.ACTIVE
+        status=WalletStatus.ACTIVE,
     )
     try:
         session.add(new_wallet)
@@ -22,7 +24,7 @@ async def create_wallet(session: AsyncSession, wallet_data: WalletRequest) -> Wa
     except IntegrityError:
         await session.rollback()
         raise UserNotFoundError(wallet_data.owner_id)
-    
+
     return new_wallet
 
 

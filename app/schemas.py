@@ -1,13 +1,15 @@
-from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from datetime import datetime
 from decimal import Decimal
-from app.enums import Currency, WalletStatus, TransactionStatus, UserStatus
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.enums import Currency, TransactionStatus, UserStatus, WalletStatus
 
 
 class UserRequest(BaseModel):
     name: str
     email: EmailStr
-    phone: str = Field(pattern="^\d{11}$")
+    phone: str = Field(pattern=r"^\d{11}$")
 
 
 class UserResponse(BaseModel):

@@ -1,9 +1,14 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from app.schemas import UserRequest
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.enums import UserStatus
+from app.errors import (
+    EmailAlreadyExistsError,
+    PhoneAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.models import User
-from app.errors import UserNotFoundError, PhoneAlreadyExistsError, EmailAlreadyExistsError
+from app.schemas import UserRequest
 
 
 async def create_user(session: AsyncSession, user_data: UserRequest) -> User:
@@ -11,7 +16,7 @@ async def create_user(session: AsyncSession, user_data: UserRequest) -> User:
         name=user_data.name,
         email=user_data.email,
         phone=user_data.phone,
-        status=UserStatus.ACTIVE
+        status=UserStatus.ACTIVE,
     )
     try:
         session.add(new_user)
