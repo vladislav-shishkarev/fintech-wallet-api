@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 
+from app.routers.transactions import router as transaction_router
 from app.routers.users import router as user_router
 from app.routers.wallets import router as wallet_router
 
 app = FastAPI()
 app.include_router(wallet_router)
 app.include_router(user_router)
+app.include_router(transaction_router)
 
 
 @app.get("/ping")
