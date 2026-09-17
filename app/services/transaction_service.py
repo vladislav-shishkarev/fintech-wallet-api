@@ -1,7 +1,53 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.errors import TransactionNotFoundError
+from app.enums import TransactionStatus, WalletStatus
+from app.errors import (
+    DifferentCurrencyError,
+    NotEnoughMoneyError,
+    TransactionNotFoundError,
+    WalletNotActiveError,
+    WalletOverlapError,
+)
 from app.models import Transaction
+from app.schemas import TransactionRequest
+from app.services.wallet_service import get_wallet
+
+
+async def create_transaction(
+    session: AsyncSession, transaction_data: TransactionRequest
+) -> Transaction:
+    if transaction_data.receiver_wallet_id == transaction_data.sender_wallet_id:
+        raise WalletOverlapError(transaction_data.receiver_wallet_id)
+
+    receiver_wallet = await get_wallet(session, transaction_data.receiver_wallet_id)
+    sender_wallet = await get_wallet(session, transaction_data.sender_wallet_id)
+
+    if receiver_wallet.status != WalletStatus.ACTIVE:
+        raise WalletNotActiveError(receiver_wallet.id, receiver_wallet.status)
+    elif sender_wallet.status != WalletStatus.ACTIVE:
+        raise WalletNotActiveError(sender_wallet.id, sender_wallet.status)
+    elif receiver_wallet.currency != sender_wallet.currency:
+        raise DifferentCurrencyError(sender_wallet.currency, receiver_wallet.currency)
+    elif transaction_data.amount > sender_wallet.balance:
+        raise NotEnoughMoneyError(sender_wallet.id, transaction_data.amount)
+
+    sender_wallet.balance -= transaction_data.amount
+    receiver_wallet.balance += transaction_data.amount
+
+    new_transaction = Transaction(
+        sender_wallet_id=sender_wallet.id,
+        receiver_wallet_id=receiver_wallet.id,
+        status=TransactionStatus.COMPLETED,
+        currency=sender_wallet.currency,
+        amount=transaction_data.amount,
+        comment=transaction_data.comment,
+    )
+
+    session.add(new_transaction)
+    await session.commit()
+    await session.refresh(new_transaction)
+
+    return new_transaction
 
 
 async def get_transaction(session: AsyncSession, transaction_id: int) -> Transaction:
