@@ -53,7 +53,7 @@ class DifferentCurrencyError(Exception):
         )
 
 
-class NotActiveWalletError(Exception):
+class WalletNotActiveError(Exception):
     def __init__(self, id: int, status: WalletStatus):
         self.id = id
         self.status = status
