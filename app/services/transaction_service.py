@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums import TransactionStatus, WalletStatus
@@ -10,7 +11,7 @@ from app.errors import (
 )
 from app.models import Transaction
 from app.schemas import TransactionRequest
-from app.services.wallet_service import get_wallet
+from app.services.wallet_service import get_wallet_for_transaction
 
 
 async def create_transaction(
@@ -19,8 +20,20 @@ async def create_transaction(
     if transaction_data.receiver_wallet_id == transaction_data.sender_wallet_id:
         raise WalletOverlapError(transaction_data.receiver_wallet_id)
 
-    receiver_wallet = await get_wallet(session, transaction_data.receiver_wallet_id)
-    sender_wallet = await get_wallet(session, transaction_data.sender_wallet_id)
+    if transaction_data.receiver_wallet_id < transaction_data.sender_wallet_id:
+        receiver_wallet = await get_wallet_for_transaction(
+            session, transaction_data.receiver_wallet_id
+        )
+        sender_wallet = await get_wallet_for_transaction(
+            session, transaction_data.sender_wallet_id
+        )
+    else:
+        sender_wallet = await get_wallet_for_transaction(
+            session, transaction_data.sender_wallet_id
+        )
+        receiver_wallet = await get_wallet_for_transaction(
+            session, transaction_data.receiver_wallet_id
+        )
 
     if receiver_wallet.status != WalletStatus.ACTIVE:
         raise WalletNotActiveError(receiver_wallet.id, receiver_wallet.status)
@@ -43,9 +56,15 @@ async def create_transaction(
         comment=transaction_data.comment,
     )
 
-    session.add(new_transaction)
-    await session.commit()
-    await session.refresh(new_transaction)
+    try:
+        session.add(new_transaction)
+        await session.commit()
+        await session.refresh(new_transaction)
+    except IntegrityError:
+        await session.rollback()
+        raise NotEnoughMoneyError(
+            transaction_data.sender_wallet_id, transaction_data.amount
+        )
 
     return new_transaction
 

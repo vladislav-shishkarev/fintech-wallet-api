@@ -33,3 +33,10 @@ async def get_wallet(session: AsyncSession, wallet_id: int) -> Wallet:
     if wallet is None:
         raise WalletNotFoundError(wallet_id)
     return wallet
+
+
+async def get_wallet_for_transaction(session: AsyncSession, wallet_id: int) -> Wallet:
+    wallet = await session.get(Wallet, wallet_id, with_for_update=True)
+    if wallet is None:
+        raise WalletNotFoundError(wallet_id)
+    return wallet
