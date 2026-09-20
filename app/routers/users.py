@@ -16,7 +16,13 @@ from app.services.user_service import create_user, get_user
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("", tags=["users"], response_model=UserResponse)
+@router.post(
+    "",
+    response_model=UserResponse,
+    responses={
+        409: {"description": "Phone or email is being used by another user already"}
+    },
+)
 async def create_new_user(
     user: UserRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
@@ -27,7 +33,11 @@ async def create_new_user(
     return result
 
 
-@router.get("/{id}", response_model=UserResponse)
+@router.get(
+    "/{id}",
+    response_model=UserResponse,
+    responses={404: {"description": "Required user is not found"}},
+)
 async def get_user_by_id(
     id: int, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:

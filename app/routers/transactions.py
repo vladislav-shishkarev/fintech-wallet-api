@@ -19,7 +19,19 @@ from app.services.transaction_service import create_transaction, get_transaction
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 
-@router.post("", response_model=TransactionResponse)
+@router.post(
+    "",
+    response_model=TransactionResponse,
+    responses={
+        404: {"description": "Wallet not found"},
+        400: {
+            "description": "Sender and receiver wallets are the same or wallets have different currencies"
+        },
+        409: {
+            "description": "Wallet is not active or does not have enough money for transaction"
+        },
+    },
+)
 async def create_new_transaction(
     transaction: TransactionRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ):
@@ -34,7 +46,11 @@ async def create_new_transaction(
     return result
 
 
-@router.get("/{id}", response_model=TransactionResponse)
+@router.get(
+    "/{id}",
+    response_model=TransactionResponse,
+    responses={404: {"description": "Transaction not found"}},
+)
 async def get_transaction_by_id(
     id: int, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> Transaction:

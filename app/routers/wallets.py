@@ -11,7 +11,11 @@ from app.services.wallet_service import create_wallet, get_wallet
 router = APIRouter(prefix="/wallets", tags=["wallets"])
 
 
-@router.post("", tags=["wallets"], response_model=WalletResponse)
+@router.post(
+    "",
+    response_model=WalletResponse,
+    responses={404: {"description": "Required user is not found"}},
+)
 async def create_new_wallet(
     wallet: WalletRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ):
@@ -25,7 +29,11 @@ async def create_new_wallet(
     return result
 
 
-@router.get("/{id}", tags=["wallets"], response_model=WalletResponse)
+@router.get(
+    "/{id}",
+    response_model=WalletResponse,
+    responses={404: {"description": "Required wallet is not found"}},
+)
 async def get_wallet_id(id: int, session: Annotated[AsyncSession, Depends(get_db)]):
     """
     Return wallet by id
