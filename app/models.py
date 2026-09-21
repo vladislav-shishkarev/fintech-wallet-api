@@ -6,7 +6,13 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.enums import Currency, TransactionStatus, UserStatus, WalletStatus
+from app.enums import (
+    Currency,
+    TransactionStatus,
+    TransactionType,
+    UserStatus,
+    WalletStatus,
+)
 
 
 class User(Base):
@@ -90,11 +96,19 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    sender_wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
-    receiver_wallet_id: Mapped[int] = mapped_column(ForeignKey("wallets.id"))
+    sender_wallet_id: Mapped[int | None] = mapped_column(ForeignKey("wallets.id"))
+    receiver_wallet_id: Mapped[int | None] = mapped_column(ForeignKey("wallets.id"))
     status: Mapped[TransactionStatus] = mapped_column(
         SAEnum(
             TransactionStatus,
+            native_enum=False,
+            values_callable=lambda obj: [x.value for x in obj],
+        ),
+        nullable=False,
+    )
+    type: Mapped[TransactionType] = mapped_column(
+        SAEnum(
+            TransactionType,
             native_enum=False,
             values_callable=lambda obj: [x.value for x in obj],
         ),
@@ -113,10 +127,12 @@ class Transaction(Base):
         DateTime(timezone=True), server_default=func.current_timestamp(), nullable=False
     )
     comment: Mapped[str] = mapped_column(String(256), nullable=True)
-    sender_wallet: Mapped["Wallet"] = relationship(
-        "Wallet", foreign_keys=sender_wallet_id, back_populates="sent_transactions"
+    sender_wallet: Mapped["Wallet | None"] = relationship(
+        "Wallet",
+        foreign_keys=sender_wallet_id,
+        back_populates="sent_transactions",
     )
-    receiver_wallet: Mapped["Wallet"] = relationship(
+    receiver_wallet: Mapped["Wallet | None"] = relationship(
         "Wallet",
         foreign_keys=receiver_wallet_id,
         back_populates="received_transactions",
@@ -131,4 +147,11 @@ class Transaction(Base):
             "currency in ('USD', 'EUR', 'RUB', 'CNY')", name="ck_transactions_currency"
         ),
         CheckConstraint("amount > 0", name="ck_transactions_amount_positive"),
+        CheckConstraint(
+            "type in ('top_up', 'transfer', 'withdrawal')", name="ck_transactions_type"
+        ),
+        CheckConstraint(
+            "(type = 'top_up' AND sender_wallet_id IS NULL AND receiver_wallet_id IS NOT NULL) OR (type = 'transfer' AND sender_wallet_id IS NOT NULL AND receiver_wallet_id IS NOT NULL) OR (type = 'withdrawal' AND receiver_wallet_id IS NULL AND sender_wallet_id IS NOT NULL)",
+            name="ck_transactions_types_compatibility",
+        ),
     )

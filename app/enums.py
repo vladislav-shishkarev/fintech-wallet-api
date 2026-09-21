@@ -20,6 +20,12 @@ class TransactionStatus(StrEnum):
     BLOCKED = "blocked"
 
 
+class TransactionType(StrEnum):
+    TOP_UP = "top_up"
+    TRANSFER = "transfer"
+    WITHDRAWAL = "withdrawal"
+
+
 class Currency(StrEnum):
     RUB = "RUB"
     USD = "USD"

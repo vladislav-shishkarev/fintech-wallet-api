@@ -1,7 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.enums import TransactionStatus, WalletStatus
+from app.enums import TransactionStatus, TransactionType, WalletStatus
 from app.errors import (
     DifferentCurrencyError,
     NotEnoughMoneyError,
@@ -54,6 +54,7 @@ async def create_transaction(
         currency=sender_wallet.currency,
         amount=transaction_data.amount,
         comment=transaction_data.comment,
+        type=TransactionType.TRANSFER,
     )
 
     try:
