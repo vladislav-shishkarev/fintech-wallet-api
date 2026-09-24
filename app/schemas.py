@@ -3,7 +3,13 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.enums import Currency, TransactionStatus, UserStatus, WalletStatus
+from app.enums import (
+    Currency,
+    TransactionStatus,
+    TransactionType,
+    UserStatus,
+    WalletStatus,
+)
 
 
 class UserRequest(BaseModel):
@@ -33,7 +39,9 @@ class WalletResponse(BaseModel):
     owner_id: int
     status: WalletStatus
     currency: Currency
-    balance: Decimal = Field(ge=0)
+    balance: Decimal = Field(
+        ge=0, max_digits=11, decimal_places=2, examples=["5000.00"]
+    )
     created_at: datetime
     name: str
     model_config = ConfigDict(from_attributes=True)
@@ -42,17 +50,25 @@ class WalletResponse(BaseModel):
 class TransactionRequest(BaseModel):
     sender_wallet_id: int
     receiver_wallet_id: int
-    amount: Decimal = Field(gt=0)
+    amount: Decimal = Field(gt=0, max_digits=11, decimal_places=2, examples=["1500.00"])
     comment: str | None = None
 
 
 class TransactionResponse(BaseModel):
     id: int
-    sender_wallet_id: int
-    receiver_wallet_id: int
+    sender_wallet_id: int | None
+    receiver_wallet_id: int | None
     status: TransactionStatus
     currency: Currency
-    amount: Decimal = Field(gt=0)
+    amount: Decimal = Field(gt=0, max_digits=11, decimal_places=2, examples=["1500.00"])
+    type: TransactionType
     date_time: datetime
     comment: str | None = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class TopUpRequest(BaseModel):
+    amount: Decimal = Field(gt=0, max_digits=11, decimal_places=2, examples=["1500.00"])
+
+
+class WithdrawalRequest(BaseModel): ...

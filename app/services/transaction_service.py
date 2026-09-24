@@ -1,8 +1,9 @@
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums import TransactionStatus, TransactionType, WalletStatus
 from app.errors import (
+    BalanceOverflowError,
     DifferentCurrencyError,
     NotEnoughMoneyError,
     TransactionNotFoundError,
@@ -10,7 +11,7 @@ from app.errors import (
     WalletOverlapError,
 )
 from app.models import Transaction
-from app.schemas import TransactionRequest
+from app.schemas import TopUpRequest, TransactionRequest
 from app.services.wallet_service import get_wallet_for_transaction
 
 
@@ -75,3 +76,31 @@ async def get_transaction(session: AsyncSession, transaction_id: int) -> Transac
     if transaction is None:
         raise TransactionNotFoundError(transaction_id)
     return transaction
+
+
+async def top_up(
+    session: AsyncSession, top_up_data: TopUpRequest, receiver_wallet_id: int
+) -> Transaction:
+    receiver_wallet = await get_wallet_for_transaction(session, receiver_wallet_id)
+    if receiver_wallet.status != WalletStatus.ACTIVE:
+        raise WalletNotActiveError(receiver_wallet_id, receiver_wallet.status)
+
+    receiver_wallet.balance += top_up_data.amount
+
+    new_transaction = Transaction(
+        receiver_wallet_id=receiver_wallet.id,
+        status=TransactionStatus.COMPLETED,
+        currency=receiver_wallet.currency,
+        amount=top_up_data.amount,
+        type=TransactionType.TOP_UP,
+    )
+
+    try:
+        session.add(new_transaction)
+        await session.commit()
+        await session.refresh(new_transaction)
+    except DataError:
+        await session.rollback()
+        raise BalanceOverflowError(receiver_wallet_id)
+
+    return new_transaction

@@ -4,8 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.errors import UserNotFoundError, WalletNotFoundError
-from app.schemas import WalletRequest, WalletResponse
+from app.errors import (
+    BalanceOverflowError,
+    UserNotFoundError,
+    WalletNotActiveError,
+    WalletNotFoundError,
+)
+from app.schemas import TopUpRequest, TransactionResponse, WalletRequest, WalletResponse
+from app.services.transaction_service import top_up
 from app.services.wallet_service import create_wallet, get_wallet
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
@@ -42,4 +48,27 @@ async def get_wallet_id(id: int, session: Annotated[AsyncSession, Depends(get_db
         result = await get_wallet(session, id)
     except WalletNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    return result
+
+
+@router.post(
+    "/{id}/top_up",
+    response_model=TransactionResponse,
+    responses={
+        404: {"description": "Wallet not found"},
+        409: {"description": "Wallet balance limit exceeded or wallet is not active"},
+    },
+)
+async def wallet_top_up(
+    top_up_data: TopUpRequest,
+    id: int,
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    try:
+        result = await top_up(session, top_up_data, id)
+    except (BalanceOverflowError, WalletNotActiveError) as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except WalletNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
     return result

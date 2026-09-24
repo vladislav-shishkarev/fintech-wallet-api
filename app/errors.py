@@ -63,4 +63,10 @@ class WalletNotActiveError(Exception):
 class WalletOverlapError(Exception):
     def __init__(self, id: int):
         self.id = id
-        super().__init__(f"Sender and receiver wallet overlap: {self.id}")
+        super().__init__(f"Sender and receiver wallet overlap: ID {self.id}")
+
+
+class BalanceOverflowError(Exception):
+    def __init__(self, id: int):
+        self.id = id
+        super().__init__(f"Balance limit exceeded: ID {self.id}")
