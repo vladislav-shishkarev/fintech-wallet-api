@@ -27,7 +27,7 @@ async def create_new_user(
     user: UserRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
     """
-    Create a new user
+    Create a new user.
     """
     try:
         result = await create_user(session, user)
@@ -45,7 +45,7 @@ async def get_user_by_id(
     id: int, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
     """
-    Return user by id
+    Return user by id.
     """
     try:
         result = await get_user(session, id)

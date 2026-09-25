@@ -26,7 +26,7 @@ async def create_new_wallet(
     wallet: WalletRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ):
     """
-    Create a new wallet
+    Create a new wallet.
     """
     try:
         result = await create_wallet(session, wallet)
@@ -42,7 +42,7 @@ async def create_new_wallet(
 )
 async def get_wallet_id(id: int, session: Annotated[AsyncSession, Depends(get_db)]):
     """
-    Return wallet by id
+    Return wallet by id.
     """
     try:
         result = await get_wallet(session, id)
@@ -65,8 +65,8 @@ async def wallet_top_up(
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
     """
-    Top up wallet balance
-    Currency is taken from the wallet
+    Top up wallet balance.
+    Currency is taken from the wallet.
     """
     try:
         result = await top_up(session, top_up_data, id)
