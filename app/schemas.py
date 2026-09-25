@@ -71,4 +71,5 @@ class TopUpRequest(BaseModel):
     amount: Decimal = Field(gt=0, max_digits=11, decimal_places=2, examples=["1500.00"])
 
 
-class WithdrawalRequest(BaseModel): ...
+class WithdrawalRequest(BaseModel):
+    amount: Decimal = Field(gt=0, max_digits=11, decimal_places=2, examples=["1500.00"])

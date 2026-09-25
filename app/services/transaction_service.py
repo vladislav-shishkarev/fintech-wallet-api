@@ -11,7 +11,7 @@ from app.errors import (
     WalletOverlapError,
 )
 from app.models import Transaction
-from app.schemas import TopUpRequest, TransactionRequest
+from app.schemas import TopUpRequest, TransactionRequest, WithdrawalRequest
 from app.services.wallet_service import get_wallet_for_transaction
 
 
@@ -102,5 +102,33 @@ async def top_up(
     except DataError:
         await session.rollback()
         raise BalanceOverflowError(receiver_wallet_id)
+
+    return new_transaction
+
+
+async def withdrawal(
+    session: AsyncSession, withdrawal_data: WithdrawalRequest, sender_wallet_id: int
+) -> Transaction:
+    sender_wallet = await get_wallet_for_transaction(session, sender_wallet_id)
+    if sender_wallet.status != WalletStatus.ACTIVE:
+        raise WalletNotActiveError(sender_wallet.id, sender_wallet.status)
+
+    sender_wallet.balance -= withdrawal_data.amount
+
+    new_transaction = Transaction(
+        sender_wallet_id=sender_wallet.id,
+        status=TransactionStatus.COMPLETED,
+        currency=sender_wallet.currency,
+        amount=withdrawal_data.amount,
+        type=TransactionType.WITHDRAWAL,
+    )
+
+    try:
+        session.add(new_transaction)
+        await session.commit()
+        await session.refresh(new_transaction)
+    except IntegrityError:
+        await session.rollback()
+        raise NotEnoughMoneyError(sender_wallet_id, withdrawal_data.amount)
 
     return new_transaction

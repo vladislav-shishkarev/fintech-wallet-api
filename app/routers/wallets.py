@@ -6,12 +6,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.errors import (
     BalanceOverflowError,
+    NotEnoughMoneyError,
     UserNotFoundError,
     WalletNotActiveError,
     WalletNotFoundError,
 )
-from app.schemas import TopUpRequest, TransactionResponse, WalletRequest, WalletResponse
-from app.services.transaction_service import top_up
+from app.schemas import (
+    TopUpRequest,
+    TransactionResponse,
+    WalletRequest,
+    WalletResponse,
+    WithdrawalRequest,
+)
+from app.services.transaction_service import top_up, withdrawal
 from app.services.wallet_service import create_wallet, get_wallet
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
@@ -71,6 +78,33 @@ async def wallet_top_up(
     try:
         result = await top_up(session, top_up_data, id)
     except (BalanceOverflowError, WalletNotActiveError) as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except WalletNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return result
+
+
+@router.post(
+    "/{id}/withdrawal",
+    response_model=TransactionResponse,
+    responses={
+        404: {"description": "Wallet not found"},
+        409: {"description": "Wallet balance is not enough or wallet is not active"},
+    },
+)
+async def wallet_withdrawal(
+    withdrawal_data: WithdrawalRequest,
+    id: int,
+    session: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Withdrawal of wallet balance.
+    Currency is taken from the wallet.
+    """
+    try:
+        result = await withdrawal(session, withdrawal_data, id)
+    except (NotEnoughMoneyError, WalletNotActiveError) as e:
         raise HTTPException(status_code=409, detail=str(e))
     except WalletNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
