@@ -64,6 +64,10 @@ async def wallet_top_up(
     id: int,
     session: Annotated[AsyncSession, Depends(get_db)],
 ):
+    """
+    Top up wallet balance
+    Currency is taken from the wallet
+    """
     try:
         result = await top_up(session, top_up_data, id)
     except (BalanceOverflowError, WalletNotActiveError) as e:

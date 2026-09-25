@@ -26,6 +26,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def create_new_user(
     user: UserRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
+    """
+    Create a new user
+    """
     try:
         result = await create_user(session, user)
     except (PhoneAlreadyExistsError, EmailAlreadyExistsError) as e:
@@ -41,6 +44,9 @@ async def create_new_user(
 async def get_user_by_id(
     id: int, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> User:
+    """
+    Return user by id
+    """
     try:
         result = await get_user(session, id)
     except UserNotFoundError as e:

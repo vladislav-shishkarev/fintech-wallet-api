@@ -35,6 +35,10 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 async def create_new_transaction(
     transaction: TransactionRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ):
+    """
+    Transfer money between two wallets
+    Both wallets must be active and have the same currency
+    """
     try:
         result = await create_transaction(session, transaction)
     except WalletNotFoundError as e:
@@ -54,6 +58,9 @@ async def create_new_transaction(
 async def get_transaction_by_id(
     id: int, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> Transaction:
+    """
+    Return transaction by id
+    """
     try:
         result = await get_transaction(session, id)
     except TransactionNotFoundError as e:
