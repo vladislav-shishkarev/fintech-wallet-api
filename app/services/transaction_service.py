@@ -1,4 +1,6 @@
-from sqlalchemy.exc import DataError, IntegrityError
+from decimal import Decimal
+
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums import TransactionStatus, TransactionType, WalletStatus
@@ -13,6 +15,8 @@ from app.errors import (
 from app.models import Transaction
 from app.schemas import TopUpRequest, TransactionRequest, WithdrawalRequest
 from app.services.wallet_service import get_wallet_for_transaction
+
+MAX_BALANCE = Decimal("999999999.99")
 
 
 async def create_transaction(
@@ -84,6 +88,8 @@ async def top_up(
     receiver_wallet = await get_wallet_for_transaction(session, receiver_wallet_id)
     if receiver_wallet.status != WalletStatus.ACTIVE:
         raise WalletNotActiveError(receiver_wallet_id, receiver_wallet.status)
+    elif receiver_wallet.balance + top_up_data.amount > MAX_BALANCE:
+        raise BalanceOverflowError(receiver_wallet_id)
 
     receiver_wallet.balance += top_up_data.amount
 
@@ -95,13 +101,9 @@ async def top_up(
         type=TransactionType.TOP_UP,
     )
 
-    try:
-        session.add(new_transaction)
-        await session.commit()
-        await session.refresh(new_transaction)
-    except DataError:
-        await session.rollback()
-        raise BalanceOverflowError(receiver_wallet_id)
+    session.add(new_transaction)
+    await session.commit()
+    await session.refresh(new_transaction)
 
     return new_transaction
 
