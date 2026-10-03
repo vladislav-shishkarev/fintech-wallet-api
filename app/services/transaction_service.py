@@ -48,6 +48,8 @@ async def create_transaction(
         raise DifferentCurrencyError(sender_wallet.currency, receiver_wallet.currency)
     elif transaction_data.amount > sender_wallet.balance:
         raise NotEnoughMoneyError(sender_wallet.id, transaction_data.amount)
+    elif transaction_data.amount + receiver_wallet.balance > MAX_BALANCE:
+        raise BalanceOverflowError(receiver_wallet.id)
 
     sender_wallet.balance -= transaction_data.amount
     receiver_wallet.balance += transaction_data.amount

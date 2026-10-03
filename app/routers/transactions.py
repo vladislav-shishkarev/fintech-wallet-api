@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.errors import (
+    BalanceOverflowError,
     DifferentCurrencyError,
     NotEnoughMoneyError,
     TransactionNotFoundError,
@@ -28,7 +29,7 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
             "description": "Sender and receiver wallets are the same or wallets have different currencies"
         },
         409: {
-            "description": "Wallet is not active or does not have enough money for transaction"
+            "description": "Wallet is not active / Wallet does not have enough money for transaction / Overflow of receiver wallet balance"
         },
     },
 )
@@ -45,7 +46,7 @@ async def create_new_transaction(
         raise HTTPException(status_code=404, detail=str(e))
     except (WalletOverlapError, DifferentCurrencyError) as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except (NotEnoughMoneyError, WalletNotActiveError) as e:
+    except (NotEnoughMoneyError, WalletNotActiveError, BalanceOverflowError) as e:
         raise HTTPException(status_code=409, detail=str(e))
     return result
 
