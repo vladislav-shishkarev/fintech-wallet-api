@@ -40,3 +40,15 @@ async def get_wallet_for_transaction(session: AsyncSession, wallet_id: int) -> W
     if wallet is None:
         raise WalletNotFoundError(wallet_id)
     return wallet
+
+
+async def change_wallet_status(
+    session: AsyncSession, wallet_id: int, wallet_status: WalletStatus
+) -> Wallet:
+    wallet = await get_wallet_for_transaction(session, wallet_id)
+    wallet.status = wallet_status
+
+    await session.commit()
+    await session.refresh(wallet)
+
+    return wallet

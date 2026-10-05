@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
+from app.enums import WalletStatus
 from app.errors import (
     BalanceOverflowError,
     NotEnoughMoneyError,
@@ -19,7 +20,7 @@ from app.schemas import (
     WithdrawalRequest,
 )
 from app.services.transaction_service import top_up, withdrawal
-from app.services.wallet_service import create_wallet, get_wallet
+from app.services.wallet_service import change_wallet_status, create_wallet, get_wallet
 
 router = APIRouter(prefix="/wallets", tags=["wallets"])
 
@@ -106,6 +107,22 @@ async def wallet_withdrawal(
         result = await withdrawal(session, withdrawal_data, id)
     except (NotEnoughMoneyError, WalletNotActiveError) as e:
         raise HTTPException(status_code=409, detail=str(e))
+    except WalletNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return result
+
+
+@router.post(
+    "/{id}/status",
+    response_model=WalletResponse,
+    responses={404: {"description": "Wallet not found"}},
+)
+async def wallet_status_change(
+    status: WalletStatus, id: int, session: Annotated[AsyncSession, Depends(get_db)]
+):
+    try:
+        result = await change_wallet_status(session, id, status)
     except WalletNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
