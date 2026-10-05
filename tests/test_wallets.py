@@ -244,6 +244,31 @@ async def test_wallet_not_active():
     async with AsyncClient(
         base_url="http://test", transport=ASGITransport(app=app)
     ) as client:
-        response = await client.get("/wallets/0")
+        r = await client.post(
+            "/users",
+            json={
+                "name": "string",
+                "email": f"{uuid.uuid4().hex}@example.com",
+                "phone": f"{random.randint(10**10, 9 * 10**10)}",
+            },
+        )
+        assert r.status_code == 200
 
-    assert response.status_code == 404
+        user_id = r.json()["id"]
+        r = await client.post(
+            "/wallets",
+            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
+        )
+        assert r.status_code == 200
+
+        wallet_id = r.json()["id"]
+        r = await client.post(
+            f"/wallets/{wallet_id}/status", params={"status": "blocked"}
+        )
+        assert r.status_code == 200
+
+        response = await client.post(
+            f"/wallets/{wallet_id}/top_up", json={"amount": 10}
+        )
+
+        assert response.status_code == 409
