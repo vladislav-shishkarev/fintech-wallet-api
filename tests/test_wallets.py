@@ -262,8 +262,8 @@ async def test_wallet_not_active():
         assert r.status_code == 200
 
         wallet_id = r.json()["id"]
-        r = await client.post(
-            f"/wallets/{wallet_id}/status", params={"status": "blocked"}
+        r = await client.patch(
+            f"/wallets/{wallet_id}/status", json={"status": "blocked"}
         )
         assert r.status_code == 200
 
