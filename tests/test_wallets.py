@@ -43,11 +43,12 @@ async def test_wallet_not_enough_money_for_withdrawal():
         r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
         assert r.status_code == 200
 
-        response = await client.post(
-            f"/wallets/{wallet_id}/withdrawal", json={"amount": 200}
-        )
+        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 200})
+        assert r.status_code == 409
 
-    assert response.status_code == 409
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+        assert wallet_balance == "100.00"
 
 
 @pytest.mark.asyncio
@@ -83,6 +84,10 @@ async def test_wallet_money_limit_exceeded():
         )
 
         assert response.status_code == 409
+
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+        assert wallet_balance == "999999999.00"
 
 
 @pytest.mark.asyncio
@@ -169,11 +174,14 @@ async def test_entire_balance_withdrawal():
         r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
         assert r.status_code == 200
 
-        response = await client.post(
-            f"/wallets/{wallet_id}/withdrawal", json={"amount": 100}
-        )
+        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 100})
 
-        assert response.status_code == 200
+        assert r.status_code == 200
+
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+
+        assert wallet_balance == "0.00"
 
 
 @pytest.mark.asyncio
@@ -199,11 +207,14 @@ async def test_successful_top_up():
         assert r.status_code == 200
 
         wallet_id = r.json()["id"]
-        response = await client.post(
-            f"/wallets/{wallet_id}/top_up", json={"amount": 10}
-        )
+        r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10})
 
-        assert response.status_code == 200
+        assert r.status_code == 200
+
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+
+        assert wallet_balance == "10.00"
 
 
 @pytest.mark.asyncio
@@ -232,11 +243,14 @@ async def test_successful_withdrawal():
         r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
         assert r.status_code == 200
 
-        response = await client.post(
-            f"/wallets/{wallet_id}/withdrawal", json={"amount": 10}
-        )
+        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 10})
 
-        assert response.status_code == 200
+        assert r.status_code == 200
+
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+
+        assert wallet_balance == "90.00"
 
 
 @pytest.mark.asyncio
@@ -270,5 +284,8 @@ async def test_wallet_not_active():
         response = await client.post(
             f"/wallets/{wallet_id}/top_up", json={"amount": 10}
         )
-
         assert response.status_code == 409
+
+        r = await client.get(f"/wallets/{wallet_id}")
+        wallet_balance = r.json()["balance"]
+        assert wallet_balance == "0.00"
