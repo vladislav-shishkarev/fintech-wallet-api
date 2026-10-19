@@ -101,3 +101,31 @@ async def test_wallet_not_active(client: AsyncClient, wallet_id: int):
     r = await client.get(f"/wallets/{wallet_id}")
     wallet_balance = r.json()["balance"]
     assert wallet_balance == "0.00"
+
+
+@pytest.mark.asyncio
+async def test_create_wallet_for_user_which_does_not_exist(
+    client: AsyncClient, wallet_id: int
+):
+    r = await client.post(
+        "/wallets", json={"owner_id": 0, "currency": "RUB", "name": "string"}
+    )
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_top_up_wallet_which_does_not_exist(client: AsyncClient):
+    r = await client.post(f"/wallets/{0}/top_up", json={"amount": 10})
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_withdrawal_wallet_which_does_not_exist(client: AsyncClient):
+    r = await client.post(f"/wallets/{0}/withdrawal", json={"amount": 10})
+    assert r.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_wrong_wallet_status(client: AsyncClient, wallet_id: int):
+    r = await client.patch(f"/wallets/{wallet_id}/status", json={"status": "aboba"})
+    assert r.status_code == 422
