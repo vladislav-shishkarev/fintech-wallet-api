@@ -1,291 +1,103 @@
-import random
-import uuid
-
 import pytest
-from httpx import ASGITransport, AsyncClient
-
-from app.main import app
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_wallet_not_found():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        response = await client.get("/wallets/0")
-
+async def test_wallet_not_found(client: AsyncClient):
+    response = await client.get("/wallets/0")
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_wallet_not_enough_money_for_withdrawal():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_wallet_not_enough_money_for_withdrawal(
+    client: AsyncClient, wallet_id: int
+):
+    r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
+    assert r.status_code == 200
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 200})
+    assert r.status_code == 409
 
-        wallet_id = r.json()["id"]
-        r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
-        assert r.status_code == 200
-
-        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 200})
-        assert r.status_code == 409
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-        assert wallet_balance == "100.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "100.00"
 
 
 @pytest.mark.asyncio
-async def test_wallet_money_limit_exceeded():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_wallet_money_limit_exceeded(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10**9 - 1})
+    assert r.status_code == 200
 
-        wallet_id = r.json()["id"]
-        r = await client.post(
-            f"/wallets/{wallet_id}/top_up", json={"amount": 10**9 - 1}
-        )
-        assert r.status_code == 200
+    response = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10})
+    assert response.status_code == 409
 
-        response = await client.post(
-            f"/wallets/{wallet_id}/top_up", json={"amount": 10}
-        )
-
-        assert response.status_code == 409
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-        assert wallet_balance == "999999999.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "999999999.00"
 
 
 @pytest.mark.asyncio
-async def test_get_wallet():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_get_wallet(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
-
-        wallet_id = r.json()["id"]
-        response = await client.get(f"/wallets/{wallet_id}")
-
+    response = await client.get(f"/wallets/{wallet_id}")
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_wrong_top_up_sum():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_wrong_top_up_sum(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
-
-        wallet_id = r.json()["id"]
-        response = await client.post(
-            f"/wallets/{wallet_id}/top_up", json={"amount": "abc"}
-        )
-
-        assert response.status_code == 422
+    response = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": "abc"})
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
-async def test_entire_balance_withdrawal():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_entire_balance_withdrawal(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
+    assert r.status_code == 200
 
-        wallet_id = r.json()["id"]
-        r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 100})
+    assert r.status_code == 200
 
-        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 100})
-
-        assert r.status_code == 200
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-
-        assert wallet_balance == "0.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "0.00"
 
 
 @pytest.mark.asyncio
-async def test_successful_top_up():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_successful_top_up(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10})
+    assert r.status_code == 200
 
-        wallet_id = r.json()["id"]
-        r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10})
-
-        assert r.status_code == 200
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-
-        assert wallet_balance == "10.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "10.00"
 
 
 @pytest.mark.asyncio
-async def test_successful_withdrawal():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_successful_withdrawal(client: AsyncClient, wallet_id: int):
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
+    assert r.status_code == 200
 
-        wallet_id = r.json()["id"]
-        r = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 100})
-        assert r.status_code == 200
+    r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 10})
+    assert r.status_code == 200
 
-        r = await client.post(f"/wallets/{wallet_id}/withdrawal", json={"amount": 10})
-
-        assert r.status_code == 200
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-
-        assert wallet_balance == "90.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "90.00"
 
 
 @pytest.mark.asyncio
-async def test_wallet_not_active():
-    async with AsyncClient(
-        base_url="http://test", transport=ASGITransport(app=app)
-    ) as client:
-        r = await client.post(
-            "/users",
-            json={
-                "name": "string",
-                "email": f"{uuid.uuid4().hex}@example.com",
-                "phone": f"{random.randint(10**10, 9 * 10**10)}",
-            },
-        )
-        assert r.status_code == 200
+async def test_wallet_not_active(client: AsyncClient, wallet_id: int):
+    r = await client.patch(f"/wallets/{wallet_id}/status", json={"status": "blocked"})
+    assert r.status_code == 200
 
-        user_id = r.json()["id"]
-        r = await client.post(
-            "/wallets",
-            json={"owner_id": user_id, "currency": "RUB", "name": "string"},
-        )
-        assert r.status_code == 200
+    response = await client.post(f"/wallets/{wallet_id}/top_up", json={"amount": 10})
+    assert response.status_code == 409
 
-        wallet_id = r.json()["id"]
-        r = await client.patch(
-            f"/wallets/{wallet_id}/status", json={"status": "blocked"}
-        )
-        assert r.status_code == 200
-
-        response = await client.post(
-            f"/wallets/{wallet_id}/top_up", json={"amount": 10}
-        )
-        assert response.status_code == 409
-
-        r = await client.get(f"/wallets/{wallet_id}")
-        wallet_balance = r.json()["balance"]
-        assert wallet_balance == "0.00"
+    r = await client.get(f"/wallets/{wallet_id}")
+    wallet_balance = r.json()["balance"]
+    assert wallet_balance == "0.00"
