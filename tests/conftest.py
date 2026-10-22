@@ -35,3 +35,18 @@ async def wallet_id(client: AsyncClient):
     assert r.status_code == 200
 
     return r.json()["id"]
+
+
+@pytest_asyncio.fixture
+async def user(client: AsyncClient):
+    r = await client.post(
+        "/users",
+        json={
+            "name": "string",
+            "email": f"{uuid.uuid4().hex}@example.com",
+            "phone": f"{random.randint(10**10, 9 * 10**10)}",
+        },
+    )
+    assert r.status_code == 200
+
+    return r.json()
