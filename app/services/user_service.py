@@ -29,7 +29,7 @@ async def create_user(session: AsyncSession, user_data: UserRequest) -> User:
             raise EmailAlreadyExistsError(user_data.email)
         elif "users_phone_key" in error_msg:
             raise PhoneAlreadyExistsError(user_data.phone)
-        raise e
+        raise
 
     return new_user
 
