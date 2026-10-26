@@ -28,6 +28,8 @@ jobs:
           python-version: "3.14"
           cache: pip
       - run: pip install -r requirements.txt
+      - run: pip install ruff==0.17.2
+      - run: ruff check .
       - run: alembic upgrade head
       - run: pytest
     
